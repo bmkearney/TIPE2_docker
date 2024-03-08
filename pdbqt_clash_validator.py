@@ -6,6 +6,7 @@ import numpy
 import datetime
 import os
 import itertools
+import shutil
 
 class Atom:
     def __init__(self,x,y,z):
@@ -21,20 +22,33 @@ def distance(x1,x2,y1,y2,z1,z2):
 
 def checker(atoms):
     for i,j in itertools.combinations(atoms,2):
-        if (distance(float(i.x),float(j.x),float(i.y),float(j.y),float(i.z),float(j.z))<1):
+        if (distance(float(i.x),float(j.x),float(i.y),float(j.y),float(i.z),float(j.z))<0.8):
             return -1
 
 filenames = os.listdir(os.getcwd())
+count=0
 for f in filenames:
     if (f[-6:] == '.pdbqt'):
+        count=count+1
+        if(count%1000==0):
+            print(count)
         file = open(f,'r')
         atoms=[]
         for line in file:
             if line.startswith("ATOM"):
-                atoms.append(Atom(line.split()[5],line.split()[6],line.split()[7]))
+                if("H" not in line.split()[-1]):
+                    atoms.append(Atom(line.split()[5],line.split()[6],line.split()[7]))
             if line.startswith("ENDMDL"):
                 if(checker(atoms) == -1):
                     flagged_files.append(f)
+                file.close()
                 break
+
+writefile=open("flagged.txt",'w')
+if(not os.path.exists('flagged/')):
+    os.makedirs('flagged/')
+
 for i in flagged_files:
     print(i)
+    writefile.write(i)
+    shutil.move(i,'flagged/')
